@@ -1,0 +1,28 @@
+---
+title: "set_title"
+author: "Tom Naber"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+knit: (function(input, ...) { 
+  move_script <- here::here("Scripts", "move_output.R"); 
+  output_folder <- here::here("HTML"); 
+  figure_folder <- here::here("Output", "Figures");
+  rmarkdown::render(input, params = "ask"); 
+  source(move_script); 
+  move_output(input, output_folder, figure_folder) })
+output:
+  html_document:
+    self_contained: true
+---
+
+# Set-up
+
+## Set options & import sources
+
+```{r setup, include=FALSE, cache = FALSE}
+knitr::opts_chunk$set(dev = "ragg_png")
+
+options(contrasts = c("contr.sum", "contr.poly"))
+
+library(ragg)
+library(here)
+```
