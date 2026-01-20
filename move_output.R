@@ -1,6 +1,17 @@
 move_output <- function(input, output, figure_folder) {
-  html_file <- paste0(sub("\\.Rmd$", "", input), ".html") # current html path
-  html_dir  <- paste0(sub("\\.Rmd$", "", input), "_files") # current html _files path
+  html_file <- {
+    dir  <- dirname(input) # take directory of .rmd file
+    base <- sub("\\.Rmd$", "", basename(input)) # remove .rmd extension
+    base <- gsub(" ", "-", base) # replace spaces by dashes
+    file.path(dir, paste0(base, ".html")) # combine dir and .html file path
+  }
+  
+  html_dir  <- {
+    dir  <- dirname(input) # take directory of .rmd file
+    base <- sub("\\.Rmd$", "", basename(input)) # remove .rmd extension
+    base <- gsub(" ", "-", base) # replace spaces by dashes
+    file.path(dir, paste0(base, "_files")) # combine dir and .html file path
+  }
   
   output_relative_dir <- substring(output, nchar(here::here()) + 2L)  # output dir created in .Rmd directory
   wrong_output_dir <- file.path(dirname(input), output_relative_dir) # output dir created in .Rmd directory
