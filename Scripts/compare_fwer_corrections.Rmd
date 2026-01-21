@@ -1,0 +1,36 @@
+---
+title: "Compare FWER Corrections"
+author: "Tom Naber"
+date: "2026-01-15"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(dplyr)
+library(kableExtra)
+```
+
+Here's a brief overview of the different error correction methods: **Familywise error rate** - with p = 0.05, if the null hypothesis is true, the probability of getting one single false positive is 5%. Good to use with few tests of high importance. - Tukey's: has high power but can only be used when comparing everything with everything (even useless comparisons like phenoage 40-50 vs kdm 20-30) and must be used on an ANOVA. - Bonferroni: divides alpha by the number of comparison and can be used for any test, even when dependent, but is practically always too conservative, inflating type II error. - Sidak: very similar to Bonferroni but with slightly more power, but requires tests to be independent. E.g., tests between machine learning models are independent, but testing different frequencies between groups are dependent because if you have significant differences in one frequency, you probably will at another, so they covary. Very few scenarios where this should be used. - Holm: smart variant of Bonferroni. It multiplies each p-value by the remaining number of tests until a 1 is reached. So with 5 tests, (p values of 0.001, 0.01, 0.1, 0.5, 0.8), the p-values become 0.005, 0.04, 0.3, 1, 1 (not 0.8). Can be used with either dependent or independent tests. - Hochberg: reverse Holm with more power. It starts with the largest p and steps down depending on remaining test, where a p larger than 1 will be capped at the largest p-value. So the example will result in 0.005, 0.04, 0.3, 0.8, 0.8. Requires independence or positive dependence (all p-values either must be independent, or move in the same direction). - Hommel: a slightly more powerful and smarter variant of Hochberg with the same assumptions.
+
+**False discovery rate** - with p = 0.05, accept that among rejected null-hypotheses, 5% are false discoveries, so with a 100 significant results, on average, no more than 5 will be a false discovery. Good to use when there are many tests and a false discovery is acceptable. - Benjamini-Hochberg procedure: higher power than FWER tests.
+
+```{r alpha_comp}
+cbind(
+  Uncorrected = c(0.005, 0.01, 0.01, 0.020, 0.2, 0.25),
+  Bonferroni = p.adjust(c(0.005, 0.01, 0.01, 0.020, 0.2, 0.25), method = "bonferroni"),
+  Holm = p.adjust(c(0.005, 0.01, 0.01, 0.020, 0.2, 0.25), method = "holm"),
+  Hochberg = p.adjust(c(0.005, 0.01, 0.01, 0.020, 0.2, 0.25), method = "hochberg"),
+  Hommel = p.adjust(c(0.005, 0.01, 0.01, 0.020, 0.2, 0.25), method = "hommel"),
+  `Benjamini-Hochberg` = p.adjust(c(0.005, 0.01, 0.01, 0.020, 0.2, 0.25), method = "BH")
+) %>% kable("html", caption = "Compare Error Correction Methods") %>%
+  kable_styling(
+    bootstrap_options = c("striped", "hover"),
+    full_width = FALSE,
+    position = "left",
+    font_size = 12,
+    fixed_thead = TRUE
+  ) %>%
+  scroll_box(width = "100%", height = "400px")
+```
