@@ -39,9 +39,10 @@ params:
 ## Set options & import sources
 
 ```{r setup, include=FALSE, cache = FALSE}
-knitr::opts_chunk$set(fig.width = 6.4, 
-                      fig.height = 4.8, 
-                      dpi = 300, 
+knitr::opts_chunk$set(fig.width = 6.4,
+                      fig.height = 4.8,
+                      dpi = 300,
+                      fig.retina = 1,
                       out.width = "100%",
                       out.height = "100%",
                       dev = "ragg_png")
@@ -52,6 +53,7 @@ options(contrasts = c("contr.sum", "contr.poly"))
 
 library(ragg)
 library(here)
+library(sameplot)
 
 source(here("Scripts", "universal_helpers.R"))
 ```

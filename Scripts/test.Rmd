@@ -1,5 +1,5 @@
 ---
-title: "Test"
+title: "Test Helpers"
 author: "Tom Naber"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 
@@ -9,7 +9,7 @@ knit: (function(input, ...) {
   rmarkdown::render(input, params = "ask");
   source(move_script);
   move_output(input, output_folder)})
-
+  
 output:
   html_document:
     theme: cosmo
@@ -19,31 +19,67 @@ output:
     df_print: paged
     highlight: tango
     self_contained: true
-    fig_width: 10
-    fig_height: 6
+    fig_width: 6.4
+    fig_height: 4.8
     code_folding: hide
+    
 editor_options:
   markdown:
     wrap: 80
   chunk_output_type: inline
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(out.height = "100%",
-                      out.width = "100%")
+# Set-up
+
+## Set options & import sources
+
+```{r setup, include=FALSE, cache = FALSE}
+knitr::opts_chunk$set(fig.width = 6.4,
+                      fig.height = 4.8,
+                      dpi = 300,
+                      fig.retina = 1,
+                      out.width = "100%",
+                      out.height = "100%",
+                      dev = "ragg_png")
 
 knitr::opts_knit$set(root.dir = here::here())
 
+options(contrasts = c("contr.sum", "contr.poly"))
+
 library(ggplot2)
+library(ragg)
 library(here)
 library(sameplot)
+
+source(here("Scripts", "universal_helpers.R"))
 ```
+
+# Make plot
 
 ```{r}
 p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg)) + ggplot2::geom_point()
+```
+
+# Sameplot render (save and include)
+
+```{r}
 sameplot(p, file = file.path("Output", "plot.png"), save = TRUE)
-sameplot(p, file = file.path("Output", "plot2.png"), save = FALSE)
+```
+
+# Knitr/RStudio backend render
+
+```{r}
 p
 ```
+
+# Render raw file absolutely
+
+```{r, echo=FALSE, results="asis"}
+knitr::asis_output(sprintf(
+  '<img src="%s">',
+  knitr::image_uri(here::here("Output", "plot.png"))
+))
+```
+
 
 
