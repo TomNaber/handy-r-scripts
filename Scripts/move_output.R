@@ -23,8 +23,6 @@ move_output <- function(input, output) {
               file.path(output, basename(html_file)),
               overwrite = TRUE) # copy HTML file
     unlink(here::here(basename(html_file)), force = TRUE) # Remove copied HTML file
-  } else {
-    stop("No HTML file found in the output folder or project root")
   }
   
   if (dir.exists(html_dir)) {

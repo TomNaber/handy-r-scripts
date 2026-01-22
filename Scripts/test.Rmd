@@ -18,7 +18,7 @@ output:
     number_sections: true
     df_print: paged
     highlight: tango
-    self_contained: true
+    self_contained: false
     fig_width: 10
     fig_height: 6
     code_folding: hide
@@ -37,17 +37,26 @@ knitr::opts_knit$set(root.dir = here::here())
 library(ggplot2)
 library(here)
 library(sameplot)
-
-source(here("Scripts", "universal_helpers.R"))
-location <- getwd()
 ```
 
 # Test plotting
 ```{r}
+print(getOption("knitr.in.progress"))
+print(knitr::is_html_output())
+
+args <- knitr::opts_knit$get("rmarkdown.pandoc.args")
+if (is.null(args)) args <- character()
+
+# Pandoc has used either --self-contained (older) or --embed-resources + --standalone (newer)
+is_self_contained <- any(args == "--self-contained") ||
+  (any(args == "--embed-resources") && any(args == "--standalone"))
+print(is_self_contained)
+```
+
+```{r}
 p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg)) + ggplot2::geom_point()
 sameplot(p, file = "plot.png", save = TRUE)
 p
-print(location)
 ```
 
 
