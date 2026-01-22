@@ -2,6 +2,14 @@
 title: "1-5-2 - Synapse Assessment"
 author: "Tom Naber"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
+
+knit: (function(input, ...) {
+  move_script <- here::here("Scripts", "move_output.R");
+  output_folder <- here::here("Output", "HTML");
+  rmarkdown::render(input, params = "ask");
+  source(move_script);
+  move_output(input, output_folder)})
+
 output:
   html_document:
     theme: cosmo
@@ -18,27 +26,28 @@ editor_options:
   markdown:
     wrap: 80
   chunk_output_type: inline
-params: 
-  research_data_folder: 
-    label: "Research data folder"
-    value: "local"
-    input: select
-    choices: ["local", "remote"]
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(out.height = "100%",
                       out.width = "100%")
+
+knitr::opts_knit$set(root.dir = here::here())
+
 library(ggplot2)
 library(here)
-source(here::here("Scripts", "universal_helpers.R"))
+library(sameplot)
 
+source(here("Scripts", "universal_helpers.R"))
+location <- getwd()
 ```
 
 # Test plotting
 ```{r}
 p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg)) + ggplot2::geom_point()
 sameplot(p, file = "plot.png", save = TRUE)
+p
+print(location)
 ```
 
 
