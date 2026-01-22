@@ -2,13 +2,14 @@
 title: "set_title"
 author: "Tom Naber"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
-knit: (function(input, ...) { 
-  move_script <- here::here("Scripts", "move_output.R"); 
-  output_folder <- here::here("HTML"); 
-  figure_folder <- here::here("Output", "Figures");
-  rmarkdown::render(input, params = "ask"); 
-  source(move_script); 
-  move_output(input, output_folder, figure_folder) })
+
+knit: (function(input, ...) {
+  move_script <- here::here("Scripts", "move_output.R");
+  output_folder <- here::here("Output");
+  rmarkdown::render(input, params = "ask");
+  source(move_script);
+  move_output(input, output_folder)})
+  
 output:
   html_document:
     theme: cosmo
@@ -18,15 +19,19 @@ output:
     df_print: paged
     highlight: tango
     self_contained: true
-    fig_width: 7
-    fig_height: 4
+    fig_width: 6.4
+    fig_height: 4.8
     code_folding: hide
+    
 editor_options:
   markdown:
     wrap: 80
   chunk_output_type: inline
+  
 params:
-
+  save_figures:
+    label: "Save figures"
+    value: FALSE
 ---
 
 # Set-up
@@ -34,14 +39,14 @@ params:
 ## Set options & import sources
 
 ```{r setup, include=FALSE, cache = FALSE}
-knitr::opts_chunk$set(
-  fig.width = 7,
-  fig.height = 4,
-  out.width = "100%",
-  out.height = "100%",
-  dpi = 500,
-  dev = "ragg_png"
-)
+knitr::opts_chunk$set(fig.width = 6.4, 
+                      fig.height = 4.8, 
+                      dpi = 300, 
+                      out.width = "100%",
+                      out.height = "100%",
+                      dev = "ragg_png")
+
+knitr::opts_knit$set(root.dir = here::here())
 
 options(contrasts = c("contr.sum", "contr.poly"))
 
