@@ -1,4 +1,20 @@
-.Rproj.user
+# RStudio
+.Rproj.user/
+
+# R
 .Rhistory
-.RData
+.Rdata
 .Ruserdata
+.RDataTmp
+
+# Backups
+Bak/
+
+# Output
+*.pptx
+
+# Environment / state
+/Savestates/
+
+# Others
+desktop.ini

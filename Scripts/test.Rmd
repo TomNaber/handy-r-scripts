@@ -1,11 +1,11 @@
 ---
-title: "1-5-2 - Synapse Assessment"
+title: "Test"
 author: "Tom Naber"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 
 knit: (function(input, ...) {
   move_script <- here::here("Scripts", "move_output.R");
-  output_folder <- here::here("Output", "HTML");
+  output_folder <- here::here("Output");
   rmarkdown::render(input, params = "ask");
   source(move_script);
   move_output(input, output_folder)})
@@ -18,7 +18,7 @@ output:
     number_sections: true
     df_print: paged
     highlight: tango
-    self_contained: false
+    self_contained: true
     fig_width: 10
     fig_height: 6
     code_folding: hide
@@ -39,23 +39,10 @@ library(here)
 library(sameplot)
 ```
 
-# Test plotting
-```{r}
-print(getOption("knitr.in.progress"))
-print(knitr::is_html_output())
-
-args <- knitr::opts_knit$get("rmarkdown.pandoc.args")
-if (is.null(args)) args <- character()
-
-# Pandoc has used either --self-contained (older) or --embed-resources + --standalone (newer)
-is_self_contained <- any(args == "--self-contained") ||
-  (any(args == "--embed-resources") && any(args == "--standalone"))
-print(is_self_contained)
-```
-
 ```{r}
 p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg)) + ggplot2::geom_point()
-sameplot(p, file = "plot.png", save = TRUE)
+sameplot(p, file = file.path("Output", "plot.png"), save = TRUE)
+sameplot(p, file = file.path("Output", "plot2.png"), save = FALSE)
 p
 ```
 
