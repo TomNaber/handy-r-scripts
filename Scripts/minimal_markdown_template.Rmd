@@ -3,12 +3,7 @@ title: "set_title"
 author: "Tom Naber"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 
-knit: (function(input, ...) {
-  move_script <- here::here("Scripts", "move_output.R");
-  output_folder <- here::here("Output");
-  rmarkdown::render(input, params = "ask");
-  source(move_script);
-  move_output(input, output_folder)})
+knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = encoding, params = "ask", output_file = here::here("Output", paste0(tools::file_path_sans_ext(basename(inputFile)), ".html")))})
   
 output:
   html_document:

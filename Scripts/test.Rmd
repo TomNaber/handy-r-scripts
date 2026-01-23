@@ -2,16 +2,10 @@
 title: "Test Helpers"
 author: "Tom Naber"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
-
-knit: (function(input, ...) {
-  move_script <- here::here("Scripts", "move_output.R");
-  output_folder <- here::here("Output");
-  rmarkdown::render(input, params = "ask");
-  source(move_script);
-  move_output(input, output_folder)})
-  
+knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = encoding, params = "ask", output_file = here::here("Output", paste0(tools::file_path_sans_ext(basename(inputFile)), ".html")))})
 output:
   html_document:
+    
     theme: cosmo
     toc: true
     toc_float: true
@@ -22,11 +16,10 @@ output:
     fig_width: 6.4
     fig_height: 4.8
     code_folding: hide
-    
 editor_options:
   markdown:
     wrap: 80
-  chunk_output_type: inline
+  chunk_output_type: console
 ---
 
 # Set-up
@@ -47,7 +40,6 @@ knitr::opts_knit$set(root.dir = here::here())
 options(contrasts = c("contr.sum", "contr.poly"))
 
 library(ggplot2)
-library(ragg)
 library(here)
 library(sameplot)
 
