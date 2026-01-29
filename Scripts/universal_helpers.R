@@ -47,3 +47,13 @@ prepare_statistics_df <- function(data,
     ) %>%
     filter(p.value < 0.05)
 }
+
+load_plot_config <- function(output_type) {
+  source(here::here("Scripts", "plot_config.R"))
+  
+  modifyList(p_config$universal_config, switch(
+    output_type,
+    paper  = p_config$paper,
+    poster = p_config$poster
+  ))
+}
