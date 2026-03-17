@@ -2,10 +2,9 @@
 title: "Test Helpers"
 author: "Tom Naber"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
-knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = encoding, params = "ask", output_file = here::here("Output", paste0(tools::file_path_sans_ext(basename(inputFile)), ".html")))})
+knit: (function(inputFile, encoding) { launcher <- "Launcher App.R"; if(!file.exists(launcher)) stop("Launcher App.R not found in working dir"); env <- new.env(); sys.source(launcher, envir = env); params <- NULL; if (exists("launch_params", envir = env, mode = "function")) { params <- env$launch_params() } else if (exists("get_params", envir = env, mode = "function")) { params <- env$get_params() } else if (exists("params", envir = env)) { params <- env$params } else { if (!requireNamespace("shiny", quietly = TRUE)) stop("Launcher App.R requires shiny but shiny is not installed"); if (exists("app", envir = env)) { params <- shiny::runApp(env$app, launch.browser = FALSE) } else if (exists("ui", envir = env) && exists("server", envir = env)) { params <- shiny::runApp(list(ui = env$ui, server = env$server), launch.browser = FALSE) } else stop("Launcher App.R must provide launch_params(), params, or an app/ui+server variable that returns params via shiny::stopApp()") }; if (!is.list(params) || is.null(names(params))) stop("Launcher did not return a named list of params"); id <- paste0(names(params), "-", unlist(lapply(params, as.character)), collapse = "_"); id <- gsub('[^A-Za-z0-9_\\-]+','_', id); outdir <- here::here("Output"); if (!dir.exists(outdir)) dir.create(outdir, recursive = TRUE); outname <- paste0(tools::file_path_sans_ext(basename(inputFile)), "_", id, ".html"); outfile <- file.path(outdir, outname); rmarkdown::render(inputFile, encoding = encoding, params = params, output_file = outfile) })
 output:
   html_document:
-    
     theme: cosmo
     toc: true
     toc_float: true
@@ -20,6 +19,12 @@ editor_options:
   markdown:
     wrap: 80
   chunk_output_type: console
+params:
+  research_data_folder: 
+    label: "Research data folder"
+    value: "local"
+    input: select
+    choices: ["local", "remote"]
 ---
 
 # Set-up
@@ -62,6 +67,7 @@ sameplot(p, file = file.path("Output", "plot.png"), save = TRUE)
 
 ```{r}
 p
+print(params$lower_peak_window)
 ```
 
 # Render raw file absolutely
