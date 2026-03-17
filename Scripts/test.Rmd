@@ -3,7 +3,7 @@ title: "Test Helpers"
 author: "Tom Naber"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 knit: (function(inputFile, encoding) { 
-      source(here::here('Scripts','Launcher App.R'), local = TRUE); 
+      source(here::here('Scripts','rmd_param_launcher.R')); 
       launch_launcher(inputFile, out_path = here::here("Output", "awesome.html")) })
 output:
   html_document:
@@ -72,7 +72,7 @@ sameplot(p, file = file.path("Output", "plot.png"), save = TRUE)
 
 ```{r}
 p
-print(params$lower_peak_window)
+print(params$upper_peak_window)
 ```
 
 # Render raw file absolutely
