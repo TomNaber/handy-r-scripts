@@ -2,7 +2,9 @@
 title: "Test Helpers"
 author: "Tom Naber"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
-knit: (function(inputFile, encoding) { source(here::here('Scripts','Launcher App.R'), local = TRUE); launch_launcher(inputFile) })
+knit: (function(inputFile, encoding) { 
+      source(here::here('Scripts','Launcher App.R'), local = TRUE); 
+      launch_launcher(inputFile, out_path = here::here("Output", "awesome.html")) })
 output:
   html_document:
     theme: cosmo
