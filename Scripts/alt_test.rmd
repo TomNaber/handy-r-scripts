@@ -3,8 +3,7 @@ title: "Test Helpers"
 author: "Tom Naber"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 knit: (function(inputFile, encoding) { 
-      source(here::here('Scripts','rmd_param_knitter.R')); 
-      smart_knitter(inputFile, out_path = here::here("Output", "test.html"))})
+      shiny::runApp("Scripts/.", launch.browser = rstudioapi::viewer) })
 output:
   html_document:
     theme: cosmo
@@ -27,57 +26,9 @@ params:
     value: "local"
     input: select
     choices: ["local", "remote"]
-  save_figures:
-    label: "Save figures"
-    value: FALSE
-  peak_definition:
-    label: "Peak definition"
-    value: "peak_to_trough"
-    input: select
-    choices: ["zero_to_peak", "peak_to_trough"]
-  lower_peak_window:
-    label: "Low limit peak window"
-    value: 300
-    input: slider
-    min: 0
-    max: 500
-    step: 1
   upper_peak_window:
-    label: "Upper limit peak window"
-    value: 350
-    input: slider
-    min: 0
-    max: 500
-    step: 1
-  reject_trials:
-    label: "Filter out rejected trials"
-    value: TRUE
-  noise_level:
-    label: "Noise floor"
-    value: 0.09
+    value: 300
     input: numeric
-  startle_threshold:
-    label: "Startle amplitude threshold (startles below this value are removed)"
-    value: 0
-    input: numeric
-  remove_blocks:
-    label: "Remove blocks up to this value"
-    value: 0
-    input: slider
-    min: 0
-    max: 6
-    step: 1
-  zero_non_startles:
-    label: "Set non-startles to 0"
-    value: TRUE
-  zero_threshold_factor:
-    label: "Set factor applied to the noise floor to determine threshold for zeroing non-startles"
-    value: 1.5
-    input: numeric
-  excluded_ids:
-    label: "List excluded IDs (comma separated)"
-    value: "1-7-2-10-KO"
-    input: text
 ---
 
 # Set-up
