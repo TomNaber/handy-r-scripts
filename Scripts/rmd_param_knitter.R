@@ -11,7 +11,7 @@ smart_knitter <- function(inputFile,
     if (is.null(param$label)) # set label to param name if no name present
       param$label <- param$name
     if (!is.null(param$input) &&
-        param$input %in% c("select", "radio")) {
+      param$input %in% c("select", "radio")) {
       param$selected <- param$value
       param$value <- NULL
     } # Rename value to selected for select or radio inputs
@@ -77,7 +77,7 @@ smart_knitter <- function(inputFile,
         values[[n]]
     }), names(values))
   } # Get param values
-  
+
   app <- shiny::shinyApp(
     ui = shiny::fluidPage(
       theme = bslib::bs_theme(version = 5, bootswatch = "zephyr"),  # set theme
@@ -86,14 +86,14 @@ smart_knitter <- function(inputFile,
       shiny::div(style = "height: 1em;"), # spacer between title and params
       shiny::fluidRow( # row of app
         shiny::column(12, # column with max width
-                      paramsUI("p"), # parameter UI
-                      shiny::div( # single row with both the run and exit buttons spaced by a gap
-                        style = "gap: 0.5em;width: 100%;",
-                        shiny::actionButton("go", "Run analysis", class = "btn btn-primary"),
-                        shiny::actionButton("exit", "Exit")
-                      ),
-                      shiny::div(style = "height: 1em;"), # spacer between title and params
-                      shiny::verbatimTextOutput("status") # status bar 
+          paramsUI("p"), # parameter UI
+          shiny::div( # single row with both the run and exit buttons spaced by a gap
+            style = "gap: 0.5em;width: 100%;",
+            shiny::actionButton("go", "Run analysis", class = "btn btn-primary"),
+            shiny::actionButton("exit", "Exit")
+          ),
+          shiny::div(style = "height: 1em;"), # spacer between title and params
+          shiny::verbatimTextOutput("status") # status bar 
         )
       ), 
     ), # compile all UI elements
@@ -119,13 +119,15 @@ smart_knitter <- function(inputFile,
         
         if (isTRUE(rv$running)) { # if rendering, paste chunk in status
           paste(readLines(status_file, warn = FALSE), collapse = "\n")
+        } else if (!is.null(rv$error)) {                         # <-- new branch
+          paste0("Render failed with error:\n", rv$error)
         } else if (!is.null(rv$done_time) && isTRUE(auto_close)) { # if done and auto_close enabled, paste save info and countdown
           elapsed <- as.numeric(difftime(Sys.time(), rv$done_time))
           
           if (elapsed >= 5) {
             shiny::stopApp()
           } # stop after 5 seconds
-          
+        
           paste0(
             "Rendered in ", rv$runtime, " ", attr(rv$runtime, "units"),
             " and saved to:\n", rv$out, "\nApp will close in ",
@@ -203,8 +205,15 @@ smart_knitter <- function(inputFile,
           rv$running <- FALSE
           rv$runtime <- round(difftime(Sys.time(), rv$start_time), 2)
           rv$done_time <- Sys.time()
+          
+          tryCatch(
+            rv$job$get_result(),
+            error = function(e) {
+              rv$error <- conditionMessage(e)
+            }
+          )
         }
-      }) # check if still rendering every second
+      }) # check if still rendering every second, if crash, save error
       
       shiny::observeEvent(input$exit, {
         shiny::stopApp()
