@@ -27,6 +27,7 @@ params:
     value: "local"
     input: select
     choices: ["local", "remote"]
+    help: "Set location to load data from"
   save_figures:
     label: "Save figures"
     value: FALSE

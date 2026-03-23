@@ -7,13 +7,15 @@ smart_knitter <- function(inputFile,
   
   shinyArgs <- function(param, ns) {
     param$inputId <- ns(param$name)
+    
     if (is.null(param$label)) # set label to param name if no name present
       param$label <- param$name
     if (!is.null(param$input) &&
-      param$input %in% c("select", "radio")) {
+        param$input %in% c("select", "radio")) {
       param$selected <- param$value
       param$value <- NULL
-    } # rename value to selected for select or radio inputs
+    } # Rename value to selected for select or radio inputs
+    
     param$name <- NULL
     param$input <- NULL
     param
@@ -31,7 +33,35 @@ smart_knitter <- function(inputFile,
     ns <- shiny::NS(id) # namespace the ID
     shiny::tagList(lapply(names(pm), function(n) {
       p <- pm[[n]]
-      do.call(getInputFun(p$input), shinyArgs(p, ns))
+      ui <- do.call(getInputFun(p$input), shinyArgs(p, ns))
+      if (!is.null(p$help)) {
+        help <- p$help
+        bslib::tooltip()
+        ui <- bslib::tooltip(ui, p$help, placement = "auto", bs_icon("info-circle"))
+      }
+      ui
+    }))
+    
+  } # Construct params UI
+  
+  paramsUI <- function(id) {
+    ns <- shiny::NS(id) # Namespace the ID
+    shiny::tagList(lapply(names(pm), function(n) { # Apply function below to all parameters
+      p <- pm[[n]] # Store individual param
+      
+      args <- shinyArgs(p, ns) # Get arguments
+      help <- args$help # Extract help
+      args$help <- NULL # Remove help argument from parameter
+      
+      if (!is.null(help) && !is.null(args$label)) {
+        args$label <- shiny::tags$span(args$label,
+                                       bslib::tooltip(
+                                         bsicons::bs_icon("info-circle"),
+                                         help, 
+                                         placement = "top"))
+      }  # create tooltip if both label and help fields are populated
+      
+      do.call(getInputFun(p$input), args) # construct the UI
     }))
   } # Construct params UI
   
@@ -56,14 +86,14 @@ smart_knitter <- function(inputFile,
       shiny::div(style = "height: 1em;"), # spacer between title and params
       shiny::fluidRow( # row of app
         shiny::column(12, # column with max width
-          paramsUI("p"), # parameter UI
-          shiny::div( # single row with both the run and exit buttons spaced by a gap
-            style = "gap: 0.5em;width: 100%;",
-            shiny::actionButton("go", "Run analysis", class = "btn btn-primary"),
-            shiny::actionButton("exit", "Exit")
-          ),
-          shiny::div(style = "height: 1em;"), # spacer between title and params
-          shiny::verbatimTextOutput("status") # status bar 
+                      paramsUI("p"), # parameter UI
+                      shiny::div( # single row with both the run and exit buttons spaced by a gap
+                        style = "gap: 0.5em;width: 100%;",
+                        shiny::actionButton("go", "Run analysis", class = "btn btn-primary"),
+                        shiny::actionButton("exit", "Exit")
+                      ),
+                      shiny::div(style = "height: 1em;"), # spacer between title and params
+                      shiny::verbatimTextOutput("status") # status bar 
         )
       ), 
     ), # compile all UI elements
