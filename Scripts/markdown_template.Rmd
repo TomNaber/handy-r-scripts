@@ -3,15 +3,28 @@ title: "set_title"
 author: "Tom Naber"
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 
-knit: (function(inputFile, encoding) { rmarkdown::render(inputFile, encoding = encoding, params = "ask", output_file = here::here("Output", paste0(tools::file_path_sans_ext(basename(inputFile)), ".html")))})
+knit: 
+  (function(inputFile, encoding) { 
+    source(here::here('scripts', 'helpers', 'rmd_param_knitter.R'));
   
+    filename_constructor <- function(params, inputFile) {
+      parts <- c(
+        inputFile
+      );
+      
+      here::here("output", "html", paste(parts, collapse = "_"));
+    };
+  
+    smart_knitter(inputFile, out_path = filename_constructor, auto_close = FALSE);
+  })
+    
 output:
   html_document:
     theme: cosmo
     toc: true
     toc_float: true
     number_sections: true
-    df_print: paged
+    df_ppi_print: paged
     highlight: tango
     self_contained: true
     fig_width: 6.4
@@ -20,13 +33,14 @@ output:
     
 editor_options:
   markdown:
-    wrap: 80
+    wrap: 100
   chunk_output_type: inline
   
 params:
   save_figures:
     label: "Save figures"
     value: FALSE
+    input: checkbox
 ---
 
 # Set-up
@@ -34,21 +48,28 @@ params:
 ## Set options & import sources
 
 ```{r setup, include=FALSE, cache = FALSE}
-knitr::opts_chunk$set(fig.width = 6.4,
-                      fig.height = 4.8,
-                      dpi = 300,
-                      fig.retina = 1,
-                      out.width = "100%",
-                      out.height = "100%",
-                      dev = "ragg_png")
+knitr::opts_chunk$set(
+  fig.width = 6.4,
+  fig.height = 4.8,
+  dpi = 600,
+  fig.retina = 1,
+  out.width = "100%",
+  out.height = "100%",
+  dev = "ragg_png",
+  error = FALSE
+)
 
-knitr::opts_knit$set(root.dir = here::here())
+knitr::opts_knit$set(
+  root.dir = here::here()
+)
 
-options(contrasts = c("contr.sum", "contr.poly"))
+options(
+  contrasts = c("contr.sum", "contr.poly"),
+  knitr.duplicate.label = "allow",
+  future.globals.maxSize = 650*1024^2
+)
 
 library(ragg)
 library(here)
 library(sameplot)
-
-source(here("Scripts", "universal_helpers.R"))
 ```
