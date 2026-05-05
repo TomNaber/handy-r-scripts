@@ -2,16 +2,16 @@ smart_knitter <- function(inputFile,
                           out_path = NULL,
                           launch_in_browser = FALSE,
                           auto_close = TRUE) {
-  
   pm <- knitr::knit_params(readLines(inputFile)) # Create params
   
   shinyArgs <- function(param, ns) {
     param$inputId <- ns(param$name)
     
-    if (is.null(param$label)) # set label to param name if no name present
+    if (is.null(param$label)) { # set label to param name if no name present
       param$label <- param$name
+    }
     if (!is.null(param$input) &&
-      param$input %in% c("select", "radio")) {
+        param$input %in% c("select", "radio")) {
       param$selected <- param$value
       param$value <- NULL
     } # Rename value to selected for select or radio inputs
@@ -22,10 +22,12 @@ smart_knitter <- function(inputFile,
   } # Set param label types to pass to UI
   
   getInputFun <- function(x) {
-    if (is.null(x))
+    if (is.null(x)) {
       return(shiny::textInput)
-    if (x == "radio")
+    }
+    if (x == "radio") {
       return(shiny::radioButtons)
+    }
     get(paste0(x, "Input"), asNamespace("shiny"))
   } # Add string of param UI objects depending on input type
   
@@ -41,7 +43,6 @@ smart_knitter <- function(inputFile,
       }
       ui
     }))
-    
   } # Construct params UI
   
   paramsUI <- function(id) {
@@ -54,12 +55,23 @@ smart_knitter <- function(inputFile,
       args$help <- NULL # Remove help argument from parameter
       
       if (!is.null(help) && !is.null(args$label)) {
-        args$label <- shiny::tags$span(args$label,
-                                       bslib::tooltip(
-                                         bsicons::bs_icon("info-circle"),
-                                         help, 
-                                         placement = "top"))
-      }  # create tooltip if both label and help fields are populated
+        if (!requireNamespace("bsicons", quietly = TRUE)) {
+          stop(
+            "The 'bsicons' package is required for tooltips but not installed.\n",
+            "Install it with: install.packages(\"bsicons\")",
+            call. = FALSE
+          )
+        }
+        
+        args$label <- shiny::tags$span(
+          args$label,
+          bslib::tooltip(
+            bsicons::bs_icon("info-circle"),
+            help,
+            placement = "top"
+          )
+        )
+      } # create tooltip if both label and help fields are populated
       
       do.call(getInputFun(p$input), args) # construct the UI
     }))
@@ -69,23 +81,26 @@ smart_knitter <- function(inputFile,
     setNames(lapply(names(values), function(n) {
       if (!is.null(pm[[n]]$input) && pm[[n]]$input == "file") {
         v <- values[[n]]
-        if (is.null(v))
+        if (is.null(v)) {
           pm[[n]]$value
-        else
+        } else {
           v$datapath
-      } else
+        }
+      } else {
         values[[n]]
+      }
     }), names(values))
   } # Get param values
-
+  
   app <- shiny::shinyApp(
     ui = shiny::fluidPage(
-      theme = bslib::bs_theme(version = 5, bootswatch = "zephyr"),  # set theme
-      style = "padding: 1em 2em 1em 2em;",  # trbl app padding
+      theme = bslib::bs_theme(version = 5, bootswatch = "zephyr"), # set theme
+      style = "padding: 1em 2em 1em 2em;", # trbl app padding
       shiny::titlePanel("Analysis Configuration"), # title
       shiny::div(style = "height: 1em;"), # spacer between title and params
       shiny::fluidRow( # row of app
-        shiny::column(12, # column with max width
+        shiny::column(
+          12, # column with max width
           paramsUI("p"), # parameter UI
           shiny::div( # single row with both the run and exit buttons spaced by a gap
             style = "gap: 0.5em;width: 100%;",
@@ -93,9 +108,9 @@ smart_knitter <- function(inputFile,
             shiny::actionButton("exit", "Exit")
           ),
           shiny::div(style = "height: 1em;"), # spacer between title and params
-          shiny::verbatimTextOutput("status") # status bar 
+          shiny::verbatimTextOutput("status") # status bar
         )
-      ), 
+      ),
     ), # compile all UI elements
     
     server = function(input, output, session) {
@@ -119,7 +134,7 @@ smart_knitter <- function(inputFile,
         
         if (isTRUE(rv$running)) { # if rendering, paste chunk in status
           paste(readLines(status_file, warn = FALSE), collapse = "\n")
-        } else if (!is.null(rv$error)) {                         # <-- new branch
+        } else if (!is.null(rv$error)) { # <-- new branch
           paste0("Render failed with error:\n", rv$error)
         } else if (!is.null(rv$done_time) && isTRUE(auto_close)) { # if done and auto_close enabled, paste save info and countdown
           elapsed <- as.numeric(difftime(Sys.time(), rv$done_time))
@@ -127,7 +142,7 @@ smart_knitter <- function(inputFile,
           if (elapsed >= 5) {
             shiny::stopApp()
           } # stop after 5 seconds
-        
+          
           paste0(
             "Rendered in ", rv$runtime, " ", attr(rv$runtime, "units"),
             " and saved to:\n", rv$out, "\nApp will close in ",
@@ -157,18 +172,26 @@ smart_knitter <- function(inputFile,
         out <- if (is.null(out_path) || identical(out_path, "")) { # if no filename, save basename
           here::here(paste0(tools::file_path_sans_ext(basename(inputFile)), ".html"))
         } else if (is.function(out_path)) { # if filename is function, evaluate it
+          dir.create(dirname(out_path(params, inputFile)),
+                     recursive = TRUE,
+                     showWarnings = FALSE
+          )
           out_path(params, inputFile)
         } else if (grepl("\\.html$", out_path, ignore.case = TRUE)) { # if filename contains .html, save as full path
           dir.create(dirname(out_path),
                      recursive = TRUE,
-                     showWarnings = FALSE)
+                     showWarnings = FALSE
+          )
           out_path
         } else { # if filename does not contain .html, evaluate as folder + basename.html
           dir.create(out_path,
                      recursive = TRUE,
-                     showWarnings = FALSE)
-          file.path(out_path,
-                    paste0(tools::file_path_sans_ext(basename(inputFile)), ".html"))
+                     showWarnings = FALSE
+          )
+          file.path(
+            out_path,
+            paste0(tools::file_path_sans_ext(basename(inputFile)), ".html")
+          )
         }
         
         rv$out <- out # store output path
@@ -194,8 +217,10 @@ smart_knitter <- function(inputFile,
             params = params,
             out = out,
             status_file = status_file
-          ) # pass render variables to the subprocess
-        )
+          ), # pass render variables to the subprocess
+          stdout = tempfile(fileext = ".log"),
+          stderr = tempfile(fileext = ".log") # write outputs to file instead of buffer to avoid buffer overflow
+        ) 
       })
       
       shiny::observe({
@@ -223,9 +248,10 @@ smart_knitter <- function(inputFile,
   
   shiny::runApp(
     app,
-    launch.browser = if (isTRUE(launch_in_browser))
+    launch.browser = if (isTRUE(launch_in_browser)) {
       TRUE
-    else
+    } else {
       rstudioapi::viewer
+    }
   ) # launch app in browser if launch_in_browser else in viewer
 }

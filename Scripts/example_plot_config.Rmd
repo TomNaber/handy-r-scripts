@@ -1,0 +1,737 @@
+### Set plot config
+
+#### Specify plot styling variables
+
+We store a separate configuration depending on output type of figure for easy switching between
+output types. Only the currently selected output type variables in params + global variables for
+plotting we may need later is returned. These variables are used to construct ggplot protoobjects
+and can be accessed either with `plot_config()`, which returns all, or with
+`plot_config("parameter")` to return a specific parameter.
+
+```{r fun_plot_cfg}
+plot_config <- function(variable = NULL, global_params = params) {
+  p_cfg_vars <- list(
+    global = list(
+      axis_unit_color = "#4D4D4D" # used later when constructing axes from HTML
+    ),
+    poster = list(),
+    paper = list(
+      figure_dir = here(
+        "output",
+        "figures",
+        if (isTRUE(global_params$telolength)) {
+          paste0(global_params$hearing_var, "_telolength")
+        } else {
+          global_params$hearing_var
+        }
+      ),
+      text_size_primary = 8,
+      text_size_secondary = 9,
+      signif_size = 14
+    )
+  )
+
+  p_cfg_vars_comb <- c(p_cfg_vars$global, p_cfg_vars[[global_params$plot_output_type]])
+
+  if (!is.null(variable)) p_cfg_vars_comb[[variable]] else p_cfg_vars_comb
+}
+```
+
+#### Specify general plot theme
+
+We first store the theme preset (theme_few), then theme overrides, then other theme items like
+guides. All items specified in `plot_theme()` must be ggplot proto objects.
+
+```{r fun_plot_theme}
+plot_theme <- function(global_params = params) {
+  config <- if (!is.null(global_params)) plot_config(global_params = global_params)
+
+  list(
+    theme_few(),
+    theme(
+      axis.text.x = element_markdown(
+        "sans",
+        size = config$text_size_primary
+      ),
+      axis.text.y = element_markdown(
+        "sans",
+        size = config$text_size_primary
+      ),
+      strip.text.x = element_markdown(
+        "sans",
+        size = config$text_size_secondary,
+        lineheight = 1.1
+      ),
+      strip.text.y = element_markdown(
+        "sans",
+        size = config$text_size_secondary,
+        lineheight = 1.1
+      ),
+      axis.title.x = element_markdown(
+        "sans",
+        size = config$text_size_secondary,
+        lineheight = 1.1
+      ),
+      axis.title.y = element_markdown(
+        "sans",
+        size = config$text_size_secondary,
+        lineheight = 1.1
+      ),
+      legend.title = element_blank(),
+      legend.background = element_rect(fill = "transparent", color = NA),
+      legend.box.background = element_rect(fill = "transparent", color = NA),
+      legend.key = element_rect(fill = "transparent"),
+      legend.position = "inside",
+      legend.justification.inside = c(0, 1),
+      legend.key.spacing.y = unit(1, "pt"),
+      panel.border = element_part_rect(
+        colour = "grey30",
+        side = "lb",
+        linewidth = 0.5
+      ),
+      plot.margin = margin(1, 1, 0, 1, unit = "pt")
+    ),
+    guides(
+      colour = guide_legend(
+        override.aes = list(size = 1.25),
+        keywidth = unit(0.3, "cm"),
+        keyheight = unit(0.3, "cm"),
+        label.theme = element_markdown(
+          "sans",
+          size = config$text_size_secondary,
+          margin = margin(l = 3, t = 1.5, unit = "pt")
+        )
+      )
+    )
+  )
+}
+```
+
+#### Specify axis scales
+
+```{r fun_plot_axes}
+axes <- function(x = NULL, y = NULL, global_params = params) {
+  config <- if (!is.null(global_params)) plot_config(global_params = global_params)
+
+  if (!is.null(x)) {
+    x <- switch(x,
+      age = define_axis(
+        config = config,
+        axis = "x",
+        type = "continuous",
+        breaks = seq(20, 80, 10),
+        limits = c(20, 82),
+        name = "Age",
+        unit = "Years"
+      ),
+      age_group = define_axis(
+        config = config,
+        axis = "x",
+        type = "discrete",
+        limits = c(1.4, 5.6),
+        name = "Age",
+        unit = "Years"
+      ),
+      age_accel_phenoage = define_axis(
+        config = config,
+        axis = "x",
+        type = "continuous",
+        breaks = seq(-20, 20, 20),
+        limits = c(-20, 20),
+        name = "PhenoAge Age Acceleration",
+        unit = "PhenoAge – Age (Years)"
+      ),
+      age_accel_kdm = define_axis(
+        config = config,
+        axis = "x",
+        type = "continuous",
+        breaks = seq(-20, 20, 20),
+        limits = c(-20, 20),
+        name = "KDM Age Acceleration",
+        unit = "KDM – Age (Years)"
+      )
+    )
+  }
+
+  if (!is.null(y)) {
+    y <- switch(y,
+      age_group = define_axis(
+        config = config,
+        axis = "y",
+        type = "discrete",
+        limits = c(1, 7),
+        name = "Age",
+        unit = "Years"
+      ),
+      hl = define_axis(
+        config = config,
+        axis = "y",
+        type = "continuous",
+        breaks = seq(0, 90, 30),
+        limits = c(-10, 100),
+        name = paste0(if (params$hearing_var == "FI_high") "High" else "Low", " Fletcher Index"),
+        unit = "dB HL"
+      ),
+      hl_rate = define_axis(
+        config = config,
+        axis = "y",
+        type = "continuous",
+        breaks = seq(0, 2, 1),
+        limits = c(-0.5, 2.6),
+        name = "Rate of HL",
+        unit = "dB HL/Year"
+      ),
+      hl_diff = define_axis(
+        config = config,
+        axis = "y",
+        type = "continuous",
+        breaks = seq(0, 2, 1),
+        limits = c(-0.5, 2.6),
+        name = "Deviation Rate of HL",
+        unit = "dB HL/Year"
+      ),
+      dmse_bioage = define_axis(
+        config = config,
+        axis = "y",
+        type = "continuous",
+        breaks = seq(0, 8, 2),
+        limits = c(-1, 8.5),
+        name = "Additional Predictive Capacity",
+        unit = "ΔMSE (dB HL)<sup>2</sup>"
+      ),
+      drmse_pred = define_axis(
+        config = config,
+        axis = "y",
+        type = "continuous",
+        breaks = seq(0, 0.25, 0.1),
+        limits = c(-0.05, 0.25),
+        name = "Additional Predictive Capacity",
+        unit = "ΔRMSE (dB HL)"
+      ),
+      drmse_biomark = define_axis(
+        config = config,
+        axis = "y",
+        type = "continuous",
+        breaks = seq(0, 0.1, 0.05),
+        limits = c(-0.025, 0.1),
+        name = "Additional Predictive Capacity",
+        unit = "ΔRMSE (dB HL)"
+      ),
+      dmse_conf = define_axis(
+        config = config,
+        axis = "y",
+        type = "continuous",
+        breaks = seq(0, 40, 5),
+        limits = c(-1, 40),
+        name = "Additional Predictive Capacity",
+        unit = "ΔMSE (dB HL)<sup>2</sup>"
+      ),
+      add_pred_conf = define_axis(
+        config = config,
+        axis = "y",
+        type = "continuous",
+        breaks = seq(0, 14, 2),
+        limits = c(-1, 15),
+        name = "Additional Predictive Capacity",
+        unit = "% Change MSE"
+      )
+    )
+  }
+
+  build_axes(x = x, y = y)
+}
+```
+
+#### Specify colors
+
+```{r fun_plot_colors}
+color_scales <- function(color_list_name) {
+  switch(color_list_name,
+    bioage = build_color_scale(
+      colors = c(
+        "age" = "#000000",
+        "age, hd_log" = "#256DAB",
+        "age, kdm" = "#059748",
+        "age, phenoage" = "#CB2027",
+        "age, telolength" = if (isTRUE(params$telolength)) "#7B3A96" else NULL
+      ),
+      fill_colors = c(
+        "age" = "#8C8C8C",
+        "age, hd_log" = "#88BDE6",
+        "age, kdm" = "#90CD97",
+        "age, phenoage" = "#F07E6E",
+        "age, telolength" = if (isTRUE(params$telolength)) "#B276B2" else NULL
+      ),
+      labels = c(
+        "age" = "Age",
+        "age, hd_log" = "Age + HD",
+        "age, kdm" = "Age + KDM",
+        "age, phenoage" = "Age + PhenoAge",
+        "age, telolength" = if (isTRUE(params$telolength)) "Age + Telolength" else NULL
+      )
+    ),
+    confounders = build_color_scale(
+      colors = c(
+        "full" = "#000000",
+        "no_gender" = "#059748",
+        "no_smoking" = "#9D722A",
+        "no_race" = "#E5126F",
+        "no_education" = "#DF5C24",
+        "no_gender, race" = "#7B3A96",
+        "full_with_phenoage" = "#256DAB"
+      ),
+      fill_colors = c(
+        "full" = "#8C8C8C",
+        "no_gender" = "#90CD97",
+        "no_smoking" = "#BFA554",
+        "no_race" = "#F6AAC9",
+        "no_education" = "#FBB258",
+        "no_gender, race" = "#BC99C7",
+        "full_with_phenoage" = "#88BDE6"
+      ),
+      labels = c(
+        "full" = "Full",
+        "no_gender" = "Gender",
+        "no_smoking" = "Smoking",
+        "no_race" = "Race",
+        "no_education" = "Education",
+        "no_gender, race" = "Gender*Race",
+        "full_with_phenoage" = "Phenoage"
+      )
+    ),
+    phenoage = build_color_scale(
+      colors = c(
+        "age" = "#000000",
+        "age, phenoage" = "#CB2027"
+      ),
+      fill_colors = c(
+        "age" = "#8C8C8C",
+        "age, phenoage" = "#F07E6E"
+      ),
+      labels = c(
+        "age" = "Age",
+        "age, phenoage" = "Age + PhenoAge"
+      )
+    ),
+    gender = build_color_scale(
+      colors = c(
+        "1" = "#2986cc",
+        "2" = "#c90076"
+      ),
+      fill_colors = c(
+        "1" = "#6fa8dc",
+        "2" = "#d5a6bd"
+      ),
+      labels = c(
+        "1" = "Male",
+        "2" = "Female"
+      )
+    ),
+    race = build_color_scale(
+      colors = c(
+        "1" = "#E5126F",
+        "3" = "#DF5C24",
+        "4" = "#7B3A96",
+        "5" = "#256DAB"
+      ),
+      fill_colors = c(
+        "1" = "#F6AAC9",
+        "3" = "#FBB258",
+        "4" = "#BC99C7",
+        "5" = "#88BDE6"
+      ),
+      labels = c(
+        "1" = "Hispanic",
+        "3" = "White",
+        "4" = "Black",
+        "5" = "Other"
+      )
+    ),
+    biomarker_diff = build_color_scale(
+      colors = c(
+        "age, lncrp, phenoage" = "#CB2027",
+        "age, lncrp" = "#059748",
+        "age, phenoage" = "grey65"
+      ),
+      fill_colors = c(
+        "age, lncrp, phenoage" = "#F07E6E",
+        "age, lncrp" = "#90CD97",
+        "age, phenoage" = "grey80"
+      ),
+      labels = c(
+        "age, lncrp, phenoage" = "Age + CRP + PhenoAge",
+        "age, lncrp" = "Age + CRP",
+        "age, phenoage" = "Age + PhenoAge"
+      ),
+      breaks = c(
+        "age, lncrp, phenoage",
+        "age, lncrp",
+        "age, phenoage"
+      )
+    ),
+    best_biomarkers = build_color_scale(
+      colors = c(
+        "age, lncrp" = "#256DAB"
+      ),
+      fill_colors = c(
+        "age, lncrp" = "#88BDE6"
+      )
+    )
+  )
+}
+```
+
+#### Specify geom style
+
+Note that using `update_geom_defaults()` is global and requires `reset_geom_defaults()` to be reset.
+`update_geom_defaults()` is only set once when switching to a different plot type and subsequent
+plots with the same styling will not have repeated `update_geom_defaults()` calls to avoid overhead
+and clutter. Plots must therefore be run in order.
+
+```{r fun_plot_theme}
+set_geom_theme <- function(geom_theme_name, global_params = params) {
+  config <- if (!is.null(global_params)) plot_config(global_params = global_params)
+
+  switch(geom_theme_name,
+    ribbon = list(
+      alpha = 0.15
+    ),
+    highlight_rect = list(
+      alpha = 0.125,
+      fill = "#ff0000"
+    ),
+    hline = list(
+      linetype = "22",
+      color = "grey20",
+      linewidth = 0.2
+    ),
+    age_rate_point = list(
+      alpha = 0.1,
+      size = 0.5,
+      shape = 1,
+      stroke = 0.25,
+      color = "grey30"
+    ),
+    age_rate_line = list(
+      linewidth = 0.6,
+      alpha = 1
+    ),
+    mse_point = list(
+      size = 1.25,
+      alpha = 1,
+      shape = 16,
+      stroke = 0.5
+    ),
+    mse_line = list(
+      linewidth = 0.7,
+      alpha = 1
+    ),
+    biomarker_linerange = list(
+      linewidth = 0.75
+    ),
+    biomarker_point = list(
+      size = 2.25,
+      alpha = 1,
+      shape = 16,
+      stroke = 0.5
+    )
+  )
+}
+```
+
+#### Set default geoms
+
+The geom themes below are used in all plots. Plot-specific geoms are called on the first plot in a
+sequence of plots that share the same geom theme.
+
+```{r set_default_geoms}
+update_geom_defaults("ribbon", set_geom_theme("ribbon"))
+update_geom_defaults("rect", set_geom_theme("highlight_rect"))
+update_geom_defaults("hline", set_geom_theme("hline"))
+```
+
+### Rate of aging panel
+
+#### Main panel (paper)
+
+```{r plot_aging, warning=FALSE}
+update_geom_defaults("point", set_geom_theme("age_rate_point"))
+update_geom_defaults("line", set_geom_theme("age_rate_line"))
+
+p0 <- ggplot() +
+  geom_point(
+    data = df,
+    aes(
+      x = age,
+      y = .data[[params$hearing_var]]
+    )
+  ) +
+  geom_line(
+    data = output_age_rate$predictions$linear,
+    aes(
+      x = age,
+      y = estimate
+    )
+  ) +
+  geom_ribbon(
+    data = output_age_rate$predictions$linear,
+    aes(
+      x = age,
+      ymin = ci_lower,
+      ymax = ci_upper
+    )
+  ) +
+  axes(
+    x = "age",
+    y = "hl"
+  ) +
+  plot_theme() +
+  theme(
+    plot.margin = margin(1, 0, 0, 1, unit = "pt"),
+    axis.title.x = element_blank()
+  )
+
+p1 <- ggplot() +
+  geom_point(
+    data = df,
+    aes(
+      x = age,
+      y = .data[[params$hearing_var]]
+    )
+  ) +
+  geom_line(
+    data = output_age_rate$predictions$quadratic,
+    aes(
+      x = age,
+      y = estimate
+    )
+  ) +
+  geom_ribbon(
+    data = output_age_rate$predictions$quadratic,
+    aes(
+      x = age,
+      ymin = ci_lower,
+      ymax = ci_upper
+    )
+  ) +
+  axes(
+    x = "age",
+    y = "hl"
+  ) +
+  plot_theme() +
+  theme(
+    plot.margin = margin(1, 0, 0, 1, unit = "pt"),
+    axis.title.y = element_blank(),
+    axis.title.x = element_blank()
+  )
+
+p2 <- ggplot() +
+  geom_rect(
+    data = pwc_age_rate_boundaries,
+    aes(
+      xmin = x_min,
+      xmax = x_max,
+      ymin = -Inf,
+      ymax = Inf
+    )
+  ) +
+  geom_point(
+    data = df,
+    aes(
+      x = age,
+      y = .data[[params$hearing_var]]
+    )
+  ) +
+  geom_ribbon(
+    data = output_age_rate$predictions$smooth,
+    aes(
+      x = age,
+      ymin = ci_lower + coef(output_age_rate$models$smooth)["(Intercept)"],
+      ymax = ci_upper + coef(output_age_rate$models$smooth)["(Intercept)"]
+    )
+  ) +
+  geom_line(
+    data = output_age_rate$predictions$smooth,
+    aes(
+      x = age,
+      y = estimate + coef(output_age_rate$models$smooth)["(Intercept)"]
+    )
+  ) +
+  axes(
+    x = "age",
+    y = "hl"
+  ) +
+  plot_theme() +
+  theme(
+    plot.margin = margin(1, 1, 0, 0, unit = "pt"),
+    axis.title.y = element_blank(),
+    axis.title.x = element_blank()
+  )
+
+p3 <- ggplot() +
+  geom_hline(yintercept = 0) +
+  geom_line(
+    data = output_age_rate$predictions$linear_derivative,
+    aes(
+      x = age,
+      y = derivative
+    )
+  ) +
+  geom_ribbon(
+    data = output_age_rate$predictions$linear_derivative,
+    aes(
+      x = age,
+      ymin = ci_lower,
+      ymax = ci_upper
+    )
+  ) +
+  axes(
+    x = "age",
+    y = "hl_rate"
+  ) +
+  plot_theme() +
+  theme(plot.margin = margin(0, 0, 0, 1, unit = "pt"))
+
+p4 <- ggplot() +
+  geom_hline(yintercept = 0) +
+  geom_line(
+    data = output_age_rate$predictions$quadratic_derivative,
+    aes(
+      x = age,
+      y = derivative
+    )
+  ) +
+  geom_ribbon(
+    data = output_age_rate$predictions$quadratic_derivative,
+    aes(
+      x = age,
+      ymin = ci_lower,
+      ymax = ci_upper
+    )
+  ) +
+  axes(
+    x = "age",
+    y = "hl_rate"
+  ) +
+  plot_theme() +
+  theme(
+    plot.margin = margin(0, 0, 0, 1, unit = "pt"),
+    axis.title.y = element_blank()
+  )
+
+p5 <- ggplot() +
+  geom_rect(
+    data = pwc_age_rate_boundaries,
+    aes(
+      xmin = x_min,
+      xmax = x_max,
+      ymin = -Inf,
+      ymax = Inf
+    )
+  ) +
+  geom_hline(yintercept = 0) +
+  geom_ribbon(
+    data = output_age_rate$predictions$derivative_smooth,
+    aes(
+      x = age,
+      ymin = ci_lower,
+      ymax = ci_upper
+    )
+  ) +
+  geom_line(
+    data = output_age_rate$predictions$derivative_smooth,
+    aes(
+      x = age,
+      y = derivative
+    )
+  ) +
+  axes(
+    x = "age",
+    y = "hl_rate"
+  ) +
+  plot_theme() +
+  theme(
+    plot.margin = margin(0, 1, 0, 0, unit = "pt"),
+    axis.title.y = element_blank()
+  )
+
+p6 <- ggplot() +
+  geom_rect(
+    data = pwc_age_rate_boundaries,
+    aes(
+      xmin = x_min,
+      xmax = x_max,
+      ymin = -Inf,
+      ymax = Inf
+    )
+  ) +
+  geom_hline(yintercept = 0) +
+  geom_ribbon(
+    data = output_age_rate$predictions$derivative_smooth,
+    aes(
+      x = age,
+      ymin = ci_lower_adj,
+      ymax = ci_upper_adj
+    )
+  ) +
+  geom_line(
+    data = output_age_rate$predictions$derivative_smooth,
+    aes(
+      x = age,
+      y = derivative_adj
+    )
+  ) +
+  axes(
+    x = "age",
+    y = "hl_diff"
+  ) +
+  plot_theme() +
+  theme(plot.margin = margin(0, 0, 1, 0, unit = "pt"))
+
+
+p <- align_plots(p0, p1, p2, p3, p4, p5, p6, align = "hv")
+
+p <- plot_grid(
+    plot_grid(
+      p[[1]], NULL,
+      p[[2]], NULL,
+      p[[3]],
+      labels = c("A", "", "B", "", "C"),
+      nrow = 1,
+      rel_widths = c(1, -0.01, 1, -0.01, 1),
+      label_x = 0.04,
+      label_y = 1.02
+    ),
+    NULL,
+    plot_grid(
+      p[[4]], NULL,
+      p[[5]], NULL,
+      p[[6]],
+      labels = c("D", "", "E", "", "F"),
+      nrow = 1,
+      rel_widths = c(1, -0.01, 1, -0.01, 1),
+      label_x = 0.04,
+      label_y = 1.02
+    ),
+  NULL,
+  plot_grid(
+    NULL, p[[7]], NULL,
+    nrow = 1,
+    rel_widths = c(0.25, 0.5, 0.25),
+    labels = c("", "G", ""),
+    label_x = 0.04,
+    label_y = 1.02
+  ),
+  ncol = 1,
+  rel_heights = c(1, 0, 1, 0, 1)
+)
+
+sameplot(
+  p,
+  file = here(plot_config("figure_dir"), "age_rate_panel.png"),
+  width = params$double_column,
+  height = 6,
+  res = 600,
+  save = params$save_figures
+)
+```
